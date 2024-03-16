@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CPT Tool V2</title>
+</head>
+<body>
+    <h1>Excel to SQL Insert Query Generator</h1>
+    <input type="file" id="excelFile" accept=".xlsx, .xls">
+    <button onclick="handleFile()">Generate SQL</button>
+    <div id="sqlOutput"></div>
+
+    <script>
+        function handleFile() {
+            const fileInput = document.getElementById('excelFile');
+            const file = fileInput.files[0];
+
+            if (file) {
+                const reader = new FileReader();
+                
+                reader.onload = function (e) {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const sheetName = workbook.SheetNames[0];
+                    const sheet = workbook.Sheets[sheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(sheet);
+
+                    const tableName = sheetName.replace(/\s+/g, ''); // Remove whitespace from table name
+
+                    let sqlQueries = [];
+                    for (let i = 0; i < jsonData.length; i++) {
+                        let cptCode = jsonData[i]['cptcode'];
+                        let icdCode = jsonData[i]['icdcode'];
+
+                        let insertQuery = `INSERT INTO ${tableName} (cptcode, icdcode) VALUES ('${cptCode}', '${icdCode}');`;
+                        sqlQueries.push(insertQuery);
+                    }
+
+                    const sqlOutput = document.getElementById('sqlOutput');
+                    sqlOutput.innerHTML = sqlQueries.join('<br>');
+                };
+
+                reader.readAsArrayBuffer(file);
+            } else {
+                alert('Please select a file.');
+            }
+        }
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.1/xlsx.full.min.js"></script>
+</body>
+</html>
